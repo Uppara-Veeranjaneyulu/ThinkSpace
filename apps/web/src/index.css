@@ -1,0 +1,316 @@
+/* ─── Google Font Import (fallback if link fails) ─────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Design Tokens ────────────────────────────────────── */
+@layer base {
+  :root {
+    /* Light mode */
+    --background: 0 0% 99%;
+    --foreground: 222 47% 11%;
+
+    --surface: 0 0% 100%;
+    --surface-subtle: 220 14% 96%;
+    --surface-muted: 220 14% 93%;
+    --surface-overlay: 0 0% 100%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 230 90% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 230 90% 97%;
+    --accent-foreground: 230 90% 40%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 230 90% 60%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 222 47% 5%;
+    --foreground: 210 40% 96%;
+
+    --surface: 222 47% 8%;
+    --surface-subtle: 222 47% 11%;
+    --surface-muted: 222 40% 14%;
+    --surface-overlay: 222 47% 10%;
+
+    --card: 222 47% 8%;
+    --card-foreground: 210 40% 96%;
+
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 96%;
+
+    --primary: 230 80% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 222 47% 13%;
+    --secondary-foreground: 210 40% 90%;
+
+    --muted: 222 47% 13%;
+    --muted-foreground: 215 20% 55%;
+
+    --accent: 230 80% 15%;
+    --accent-foreground: 230 80% 75%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 222 47% 15%;
+    --input: 222 47% 15%;
+    --ring: 230 80% 65%;
+  }
+}
+
+/* ─── Base Styles ──────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  ::selection {
+    @apply bg-primary/20 text-foreground;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    @apply w-1.5;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/30;
+  }
+}
+
+/* ─── Component Classes ─────────────────────────────────── */
+@layer components {
+  /* Card */
+  .card {
+    @apply bg-card rounded-xl border border-border shadow-card transition-shadow duration-200;
+  }
+
+  .card-hover {
+    @apply card hover:shadow-card-hover;
+  }
+
+  /* Thought card */
+  .thought-card {
+    @apply card p-4 sm:p-5 cursor-pointer;
+    @apply hover:bg-surface-subtle transition-colors duration-150;
+  }
+
+  /* Button base styles */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg font-medium;
+    @apply transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+    @apply disabled:pointer-events-none disabled:opacity-50;
+    @apply select-none;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-primary-foreground;
+    @apply hover:opacity-90 active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply btn bg-secondary text-secondary-foreground;
+    @apply hover:bg-muted active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply btn hover:bg-accent hover:text-accent-foreground;
+    @apply active:scale-[0.98];
+  }
+
+  .btn-destructive {
+    @apply btn bg-destructive text-destructive-foreground;
+    @apply hover:opacity-90 active:scale-[0.98];
+  }
+
+  .btn-outline {
+    @apply btn border border-border bg-transparent;
+    @apply hover:bg-accent hover:text-accent-foreground;
+  }
+
+  .btn-sm  { @apply h-8 px-3 text-sm; }
+  .btn-md  { @apply h-10 px-4 text-sm; }
+  .btn-lg  { @apply h-11 px-6 text-base; }
+  .btn-xl  { @apply h-12 px-8 text-base font-semibold; }
+  .btn-icon { @apply h-9 w-9 p-0; }
+  .btn-icon-sm { @apply h-8 w-8 p-0; }
+
+  /* Input */
+  .input {
+    @apply flex w-full rounded-lg border border-input bg-surface px-3 py-2 text-sm;
+    @apply ring-offset-background placeholder:text-muted-foreground;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1;
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+    @apply transition-shadow duration-150;
+  }
+
+  .textarea {
+    @apply input min-h-[100px] resize-none;
+  }
+
+  /* Skeleton loader */
+  .skeleton {
+    @apply animate-skeleton rounded-md bg-muted;
+  }
+
+  /* Avatar */
+  .avatar {
+    @apply relative flex shrink-0 overflow-hidden rounded-full;
+    @apply ring-2 ring-border;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+    @apply transition-colors;
+  }
+
+  .badge-primary {
+    @apply badge bg-primary/10 text-primary;
+  }
+
+  .badge-secondary {
+    @apply badge bg-secondary text-secondary-foreground;
+  }
+
+  .badge-mood {
+    @apply badge bg-surface-muted text-muted-foreground;
+  }
+
+  /* Tab */
+  .tab-trigger {
+    @apply relative flex-1 py-3 text-sm font-medium text-muted-foreground;
+    @apply transition-colors duration-150 hover:text-foreground;
+    @apply focus-visible:outline-none;
+  }
+
+  .tab-trigger[data-state="active"] {
+    @apply text-foreground;
+  }
+
+  .tab-trigger[data-state="active"]::after {
+    @apply absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full;
+    content: '';
+  }
+
+  /* Action button (like, comment, etc.) */
+  .action-btn {
+    @apply inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm;
+    @apply text-muted-foreground transition-all duration-150;
+    @apply hover:text-foreground hover:bg-accent;
+    @apply active:scale-95;
+  }
+
+  .action-btn.liked {
+    @apply text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10;
+  }
+
+  .action-btn.bookmarked {
+    @apply text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10;
+  }
+
+  .action-btn.reposted {
+    @apply text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-500/10;
+  }
+
+  /* Sidebar nav item */
+  .nav-item {
+    @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium;
+    @apply text-muted-foreground transition-all duration-150;
+    @apply hover:text-foreground hover:bg-accent;
+  }
+
+  .nav-item.active {
+    @apply text-foreground bg-accent;
+  }
+
+  /* Divider */
+  .divider {
+    @apply h-px w-full bg-border;
+  }
+
+  /* Empty state */
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-16 text-center;
+  }
+
+  /* Error state */
+  .error-state {
+    @apply flex flex-col items-center justify-center py-16 text-center;
+  }
+}
+
+/* ─── Utilities ─────────────────────────────────────────── */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .bg-background { background-color: hsl(var(--background)); }
+  .bg-foreground { background-color: hsl(var(--foreground)); }
+  .bg-card { background-color: hsl(var(--card)); }
+  .bg-primary { background-color: hsl(var(--primary)); }
+  .bg-secondary { background-color: hsl(var(--secondary)); }
+  .bg-muted { background-color: hsl(var(--muted)); }
+  .bg-accent { background-color: hsl(var(--accent)); }
+  .bg-destructive { background-color: hsl(var(--destructive)); }
+  .bg-surface { background-color: hsl(var(--surface)); }
+  .bg-surface-subtle { background-color: hsl(var(--surface-subtle)); }
+  .bg-surface-muted { background-color: hsl(var(--surface-muted)); }
+
+  .text-foreground { color: hsl(var(--foreground)); }
+  .text-card-foreground { color: hsl(var(--card-foreground)); }
+  .text-primary { color: hsl(var(--primary)); }
+  .text-primary-foreground { color: hsl(var(--primary-foreground)); }
+  .text-secondary-foreground { color: hsl(var(--secondary-foreground)); }
+  .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+  .text-accent-foreground { color: hsl(var(--accent-foreground)); }
+  .text-destructive { color: hsl(var(--destructive)); }
+  .text-destructive-foreground { color: hsl(var(--destructive-foreground)); }
+
+  .border-border { border-color: hsl(var(--border)); }
+  .border-input { border-color: hsl(var(--input)); }
+
+  .ring-ring { --tw-ring-color: hsl(var(--ring)); }
+  .ring-offset-background { --tw-ring-offset-color: hsl(var(--background)); }
+}

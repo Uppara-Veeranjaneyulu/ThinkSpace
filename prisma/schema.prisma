@@ -1,0 +1,416 @@
+// ThinkSpace Database Schema
+// PostgreSQL + Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum ThoughtVisibility {
+  PUBLIC
+  FOLLOWERS
+  PRIVATE
+}
+
+enum ThoughtMood {
+  HAPPY
+  SAD
+  EXCITED
+  CURIOUS
+  ANGRY
+  PEACEFUL
+  CONFUSED
+  MOTIVATED
+  REFLECTIVE
+  GRATEFUL
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  REPLY
+  FOLLOW
+  REPOST
+  MENTION
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  HATE_SPEECH
+  VIOLENCE
+  SEXUAL_CONTENT
+  MISINFORMATION
+  IMPERSONATION
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
+// ─────────────────────────────────────────────────────────
+// User
+// ─────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String?  // null for OAuth-only accounts
+  displayName  String
+  bio          String?
+  avatarUrl    String?
+  coverImageUrl String?
+  isVerified   Boolean  @default(false)
+  isPrivate    Boolean  @default(false)
+  isSuspended  Boolean  @default(false)
+  role         UserRole @default(USER)
+
+  // Email verification
+  emailVerified         Boolean  @default(false)
+  emailVerifyToken      String?
+  emailVerifyExpiry     DateTime?
+
+  // Password reset
+  passwordResetToken    String?
+  passwordResetExpiry   DateTime?
+
+  // Notification preferences (stored as JSON for flexibility)
+  notifyLikes      Boolean @default(true)
+  notifyComments   Boolean @default(true)
+  notifyFollows    Boolean @default(true)
+  notifyMentions   Boolean @default(true)
+  notifyReposts    Boolean @default(true)
+
+  // Google OAuth
+  googleId     String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  thoughts       Thought[]
+  comments       Comment[]
+  likes          Like[]
+  bookmarks      Bookmark[]
+  reposts        Repost[]
+  refreshTokens  RefreshToken[]
+  
+  followers      Follow[] @relation("UserFollowers")
+  following      Follow[] @relation("UserFollowing")
+  
+  notificationsReceived Notification[] @relation("NotificationRecipient")
+  notificationsSent     Notification[] @relation("NotificationActor")
+  
+  reportsSubmitted Report[] @relation("ReportSubmitter")
+  reportsReceived  Report[] @relation("ReportTarget")
+  
+  blockedUsers   Block[] @relation("Blocker")
+  blockedByUsers Block[] @relation("Blocked")
+
+  @@index([username])
+  @@index([email])
+  @@index([createdAt])
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────
+// Thought
+// ─────────────────────────────────────────────────────────
+
+model Thought {
+  id          String            @id @default(cuid())
+  content     String            @db.VarChar(500)
+  mood        ThoughtMood?
+  visibility  ThoughtVisibility @default(PUBLIC)
+  isAnonymous Boolean           @default(false)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  topics    ThoughtTopic[]
+  likes     Like[]
+  bookmarks Bookmark[]
+  reposts   Repost[]
+  comments  Comment[]
+  notifications Notification[]
+  reports   Report[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([visibility])
+  @@map("thoughts")
+}
+
+// ─────────────────────────────────────────────────────────
+// Comment
+// ─────────────────────────────────────────────────────────
+
+model Comment {
+  id      String @id @default(cuid())
+  content String @db.VarChar(300)
+
+  thoughtId String
+  thought   Thought @relation(fields: [thoughtId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Self-referential for replies (max 1 level of nesting in DB, UI shows 2)
+  parentCommentId String?
+  parentComment   Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  replies         Comment[] @relation("CommentReplies")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notifications Notification[]
+  reports       Report[]
+
+  @@index([thoughtId])
+  @@index([userId])
+  @@index([parentCommentId])
+  @@map("comments")
+}
+
+// ─────────────────────────────────────────────────────────
+// Like
+// ─────────────────────────────────────────────────────────
+
+model Like {
+  id String @id @default(cuid())
+
+  thoughtId String
+  thought   Thought @relation(fields: [thoughtId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([thoughtId, userId])
+  @@index([thoughtId])
+  @@index([userId])
+  @@map("likes")
+}
+
+// ─────────────────────────────────────────────────────────
+// Bookmark
+// ─────────────────────────────────────────────────────────
+
+model Bookmark {
+  id String @id @default(cuid())
+
+  thoughtId String
+  thought   Thought @relation(fields: [thoughtId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([thoughtId, userId])
+  @@index([userId])
+  @@map("bookmarks")
+}
+
+// ─────────────────────────────────────────────────────────
+// Repost
+// ─────────────────────────────────────────────────────────
+
+model Repost {
+  id String @id @default(cuid())
+
+  thoughtId String
+  thought   Thought @relation(fields: [thoughtId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([thoughtId, userId])
+  @@index([thoughtId])
+  @@index([userId])
+  @@map("reposts")
+}
+
+// ─────────────────────────────────────────────────────────
+// Follow
+// ─────────────────────────────────────────────────────────
+
+model Follow {
+  id String @id @default(cuid())
+
+  followerId String
+  follower   User   @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+
+  followingId String
+  following   User   @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+// ─────────────────────────────────────────────────────────
+// Topic
+// ─────────────────────────────────────────────────────────
+
+model Topic {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  description String?
+
+  createdAt DateTime @default(now())
+
+  thoughts ThoughtTopic[]
+
+  @@index([slug])
+  @@map("topics")
+}
+
+// ─────────────────────────────────────────────────────────
+// ThoughtTopic (junction)
+// ─────────────────────────────────────────────────────────
+
+model ThoughtTopic {
+  thoughtId String
+  thought   Thought @relation(fields: [thoughtId], references: [id], onDelete: Cascade)
+
+  topicId String
+  topic   Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([thoughtId, topicId])
+  @@index([topicId])
+  @@map("thought_topics")
+}
+
+// ─────────────────────────────────────────────────────────
+// Notification
+// ─────────────────────────────────────────────────────────
+
+model Notification {
+  id   String           @id @default(cuid())
+  type NotificationType
+
+  recipientId String
+  recipient   User   @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  actorId String?
+  actor   User?   @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  thoughtId String?
+  thought   Thought? @relation(fields: [thoughtId], references: [id], onDelete: Cascade)
+
+  commentId String?
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  isRead Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([recipientId, isRead])
+  @@index([recipientId, createdAt])
+  @@map("notifications")
+}
+
+// ─────────────────────────────────────────────────────────
+// Report
+// ─────────────────────────────────────────────────────────
+
+model Report {
+  id          String       @id @default(cuid())
+  reason      ReportReason
+  description String?
+  status      ReportStatus @default(PENDING)
+
+  reporterId String
+  reporter   User   @relation("ReportSubmitter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  // Target user (for user reports)
+  targetUserId String?
+  targetUser   User?   @relation("ReportTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  // Target content
+  thoughtId String?
+  thought   Thought? @relation(fields: [thoughtId], references: [id], onDelete: Cascade)
+
+  commentId String?
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: SetNull)
+
+  // Moderation notes
+  moderatorNote String?
+  resolvedAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([status])
+  @@index([reporterId])
+  @@map("reports")
+}
+
+// ─────────────────────────────────────────────────────────
+// Block
+// ─────────────────────────────────────────────────────────
+
+model Block {
+  id String @id @default(cuid())
+
+  blockerId String
+  blocker   User   @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+
+  blockedId String
+  blocked   User   @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+  @@map("blocks")
+}
+
+// ─────────────────────────────────────────────────────────
+// RefreshToken
+// ─────────────────────────────────────────────────────────
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique // Store hashed, never raw
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime? // null = valid, set = revoked
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
