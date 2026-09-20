@@ -37,7 +37,14 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Do not attempt token refresh for auth endpoints
+    const isAuthEndpoint =
+      originalRequest?.url?.includes('/auth/login') ||
+      originalRequest?.url?.includes('/auth/register') ||
+      originalRequest?.url?.includes('/auth/refresh') ||
+      originalRequest?.url?.includes('/auth/me');
+
+    if (error.response?.status === 401 && !originalRequest?._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         // Queue this request until token refresh completes
         return new Promise((resolve, reject) => {
@@ -69,8 +76,6 @@ api.interceptors.response.use(
         refreshQueue.forEach(({ reject }) => reject(refreshError));
         refreshQueue = [];
         setAccessToken(null);
-        // Redirect to login
-        window.location.href = '/login';
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

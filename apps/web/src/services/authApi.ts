@@ -26,9 +26,13 @@ export const authApi = {
     setAccessToken(null);
   },
 
-  async getMe(): Promise<AuthUserDTO> {
-    const res = await api.get<{ data: AuthUserDTO }>('/auth/me');
-    return res.data.data;
+  async getMe(): Promise<AuthUserDTO | null> {
+    try {
+      const res = await api.get<{ data: AuthUserDTO }>('/auth/me');
+      return res.data.data;
+    } catch {
+      return null;
+    }
   },
 
   async refreshToken(): Promise<string> {

@@ -1,5 +1,6 @@
 import { Router, type IRouter } from 'express';
 import { healthRouter } from './health.js';
+import { authRouter } from '../modules/auth/auth.routes.js';
 
 export const router: IRouter = Router();
 
@@ -7,7 +8,7 @@ export const router: IRouter = Router();
 router.use('/health', healthRouter);
 
 // ─── Auth ─────────────────────────────────────────────────
-// router.use('/auth', authRouter); // Phase 3
+router.use('/auth', authRouter);
 
 // ─── Users ────────────────────────────────────────────────
 // router.use('/users', usersRouter); // Phase 4

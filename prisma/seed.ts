@@ -18,9 +18,24 @@
  */
 
 import { PrismaClient, type Prisma } from '@prisma/client';
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { PrismaNeon } from '@prisma/adapter-neon';
+import ws from 'ws';
 import argon2 from 'argon2';
 
-const prisma = new PrismaClient();
+neonConfig.webSocketConstructor = ws;
+
+function createPrismaClient(): PrismaClient {
+  const dbUrl = process.env.DATABASE_URL || '';
+  if (dbUrl.includes('neon.tech')) {
+    const pool = new Pool({ connectionString: dbUrl });
+    const adapter = new PrismaNeon(pool);
+    return new PrismaClient({ adapter });
+  }
+  return new PrismaClient();
+}
+
+const prisma = createPrismaClient();
 
 // ─── Seed data ────────────────────────────────────────────
 
