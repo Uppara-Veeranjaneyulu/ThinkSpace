@@ -19,17 +19,6 @@
 
 ---
 
-## ✨ Key Features
-
-- 💭 **Thought Sharing** — Post thoughts up to 500 characters with moods, topics, and visibility controls.
-- 🎭 **Anonymous Posting** — Share sensitive questions or reflections without revealing your profile identity.
-- 💬 **Discussions & Interactions** — Like, bookmark, repost, and engage in threaded comment conversations.
-- 🏷️ **Topics & Hashtags** — Explore thoughts categorized by technology, design, life, philosophy, and more.
-- 🌓 **Sleek UI & Dark Mode** — Premium, responsive design with smooth micro-interactions and dark/light themes.
-- 🛡️ **Safety & Privacy** — Built-in moderation tools, report systems, and block options.
-
----
-
 ## 🛠️ Tech Stack
 
 | Component | Technologies |
